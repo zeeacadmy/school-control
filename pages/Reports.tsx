@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DB } from '../db';
 import { Grade, Student, Subject, GradeRecord, SchoolSettings } from '../types';
 import { calculateStudentStatus, DetailedReportData } from '../logic/grading';
-import { Printer, FileDown, Percent, FileText, BarChart3, Award, Download, LayoutGrid, Users, ShieldAlert, Loader2, MessageCircle, Sparkles, Brain, X, Share2, Edit3, CheckSquare, Square, Settings2, Search, Filter, Trophy, Star, Medal } from 'lucide-react';
+import { Printer, FileDown, Percent, FileText, BarChart3, Award, Download, LayoutGrid, Users, ShieldAlert, Loader2, MessageCircle, Sparkles, Brain, X, Share2, Edit3, CheckSquare, Square, Settings2, Search, Filter, Trophy, Star, Medal, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 type ReportTerm = 1 | 2 | 'final';
@@ -27,7 +27,7 @@ export const Reports: React.FC = () => {
   const [selectedTerm, setSelectedTerm] = useState<ReportTerm>('final');
   const [reportType, setReportType] = useState<ReportType>('table');
   const [viewMode, setViewMode] = useState<'all' | 'top' | 'failed'>('all');
-  const [isExporting, setIsExporting] = useState(false);
+  const [topCount, setTopCount] = useState<number>(5); // عدد الأوائل المطلوب عرضهم (3-5)
   const reportContentRef = useRef<HTMLDivElement>(null);
   
   // AI States
@@ -35,7 +35,7 @@ export const Reports: React.FC = () => {
   const [aiResult, setAiResult] = useState<{ studentId: string, text: string } | null>(null);
 
   // Retake Customization States
-  const [retakeOverrides, setRetakeOverrides] = useState<Record<string, string[]>>({}); // studentId -> list of subjectIds to INCLUDE in retake
+  const [retakeOverrides, setRetakeOverrides] = useState<Record<string, string[]>>({}); 
   const [editingRetakeStudent, setEditingRetakeStudent] = useState<ExtendedResult | null>(null);
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -49,7 +49,6 @@ export const Reports: React.FC = () => {
     setGrades(DB.getGrades());
     setSettings(DB.getSettings());
     
-    // Load retake overrides from localStorage if any
     const savedOverrides = localStorage.getItem('scs_retake_overrides');
     if (savedOverrides) setRetakeOverrides(JSON.parse(savedOverrides));
   }, []);
@@ -67,7 +66,7 @@ export const Reports: React.FC = () => {
     return gradeStudents.map(student => calculateStudentStatus(student, gradeSubjects, grades));
   }, [selectedGrade, students, gradeSubjects, grades]);
 
-  // Helper to get processed results for any grade
+  // دالة معالجة النتائج لأي صف (تستخدم في لوحة الشرف)
   const getProcessedResultsForGrade = (grade: Grade, term: ReportTerm): ExtendedResult[] => {
     const subjectsForGrade = allSubjects.filter(s => s.grade === grade);
     const studentsForGrade = students.filter(s => s.grade === grade);
@@ -131,21 +130,22 @@ export const Reports: React.FC = () => {
     return base;
   }, [termProcessedResults, viewMode, retakeOverrides]);
 
+  // بيانات لوحة الشرف لكافة الصفوف
   const honorRollData = useMemo(() => {
     if (reportType !== 'honor_roll') return [];
     return Object.values(Grade).map(grade => {
       const topStudents = getProcessedResultsForGrade(grade, selectedTerm)
         .filter(r => r.termSpecificStatus === 'ناجح')
         .sort((a, b) => (a.rank || 0) - (b.rank || 0))
-        .slice(0, 5);
+        .slice(0, topCount);
       return { grade, topStudents };
     }).filter(g => g.topStudents.length > 0);
-  }, [reportType, students, allSubjects, grades, selectedTerm]);
+  }, [reportType, students, allSubjects, grades, selectedTerm, topCount]);
 
   const handleAIAnalysis = async (studentResult: ExtendedResult) => {
     setAiAnalyzing(studentResult.student.id);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `أنت مستشار تربوي ذكي. قم بتحليل درجات الطالب التالي في الصف ${studentResult.student.grade}:
       الاسم: ${studentResult.student.name}
       المعدل العام: ${studentResult.finalPercentage.toFixed(1)}%
@@ -184,7 +184,7 @@ export const Reports: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      {/* Retake Management Modal (Same as before) */}
+      {/* Retake Management Modal */}
       {editingRetakeStudent && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-indigo-950/60 backdrop-blur-md animate-in fade-in duration-300">
               <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full border border-indigo-100 dark:border-slate-800">
@@ -232,12 +232,21 @@ export const Reports: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xl no-print space-y-6">
         <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-center">
             <div className="flex flex-wrap items-center gap-4">
-                {reportType !== 'honor_roll' && (
+                {reportType !== 'honor_roll' ? (
                   <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 mr-2">الصف الدراسي</span>
                       <select className="bg-gray-50 dark:bg-slate-950 border-none p-3 rounded-2xl min-w-[200px] outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-gray-700 dark:text-slate-200 shadow-sm" value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value as Grade)}>
                           {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
                       </select>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 mr-2">عدد الأوائل</span>
+                    <div className="flex bg-gray-50 dark:bg-slate-950 p-1.5 rounded-2xl shadow-sm border dark:border-slate-800">
+                        {[3, 4, 5].map(n => (
+                          <button key={n} onClick={() => setTopCount(n)} className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${topCount === n ? 'bg-amber-500 text-white shadow-md' : 'text-gray-400 hover:text-amber-500'}`}>{n}</button>
+                        ))}
+                    </div>
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
@@ -270,7 +279,6 @@ export const Reports: React.FC = () => {
           <div className="space-y-12">
             {honorRollData.map(({ grade, topStudents }) => (
               <div key={grade} className="bg-white p-8 rounded-[2.5rem] border-2 border-indigo-950 shadow-sm page-break relative overflow-hidden">
-                {/* Decoration */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 opacity-50 z-0"></div>
                 
                 <div className="relative z-10">
@@ -321,7 +329,7 @@ export const Reports: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Summary Table for Top 5 */}
+                  {/* Summary Table for Top Students */}
                   <div className="mt-12 overflow-hidden rounded-3xl border-2 border-black">
                      <table className="w-full text-right">
                         <thead>
@@ -352,7 +360,7 @@ export const Reports: React.FC = () => {
             {honorRollData.length === 0 && (
               <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                   <Star className="w-16 h-16 text-amber-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-bold">لم يتم العثور على طلاب ناجحين لإدراجهم في لوحة الشرف للعام الحالي.</p>
+                  <p className="text-gray-400 font-bold">لم يتم العثور على طلاب متفوقين لإدراجهم في لوحة الشرف لهذه الفترة.</p>
               </div>
             )}
           </div>
