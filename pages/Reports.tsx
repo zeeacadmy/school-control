@@ -18,7 +18,7 @@ interface ExtendedResult extends DetailedReportData {
 }
 
 const getRankArabic = (rank: number) => {
-  const ranks = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
+  const ranks = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'الثامن', 'العاشر'];
   return ranks[rank - 1] || `${rank}`;
 };
 
@@ -27,14 +27,12 @@ export const Reports: React.FC = () => {
   const [selectedTerm, setSelectedTerm] = useState<ReportTerm>('final');
   const [reportType, setReportType] = useState<ReportType>('table');
   const [viewMode, setViewMode] = useState<'all' | 'top' | 'failed'>('all');
-  const [topCount, setTopCount] = useState<number>(5); // عدد الأوائل المطلوب عرضهم (3-5)
+  const [topCount, setTopCount] = useState<number>(5); 
   const reportContentRef = useRef<HTMLDivElement>(null);
   
-  // AI States
   const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<{ studentId: string, text: string } | null>(null);
 
-  // Retake Customization States
   const [retakeOverrides, setRetakeOverrides] = useState<Record<string, string[]>>({}); 
   const [editingRetakeStudent, setEditingRetakeStudent] = useState<ExtendedResult | null>(null);
 
@@ -66,7 +64,6 @@ export const Reports: React.FC = () => {
     return gradeStudents.map(student => calculateStudentStatus(student, gradeSubjects, grades));
   }, [selectedGrade, students, gradeSubjects, grades]);
 
-  // دالة معالجة النتائج لأي صف (تستخدم في لوحة الشرف)
   const getProcessedResultsForGrade = (grade: Grade, term: ReportTerm): ExtendedResult[] => {
     const subjectsForGrade = allSubjects.filter(s => s.grade === grade);
     const studentsForGrade = students.filter(s => s.grade === grade);
@@ -130,7 +127,6 @@ export const Reports: React.FC = () => {
     return base;
   }, [termProcessedResults, viewMode, retakeOverrides]);
 
-  // بيانات لوحة الشرف لكافة الصفوف
   const honorRollData = useMemo(() => {
     if (reportType !== 'honor_roll') return [];
     return Object.values(Grade).map(grade => {
@@ -145,7 +141,9 @@ export const Reports: React.FC = () => {
   const handleAIAnalysis = async (studentResult: ExtendedResult) => {
     setAiAnalyzing(studentResult.student.id);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+      if (!apiKey) throw new Error('API Key missing');
+      const ai = new GoogleGenAI({ apiKey: apiKey });
       const prompt = `أنت مستشار تربوي ذكي. قم بتحليل درجات الطالب التالي في الصف ${studentResult.student.grade}:
       الاسم: ${studentResult.student.name}
       المعدل العام: ${studentResult.finalPercentage.toFixed(1)}%
@@ -184,7 +182,6 @@ export const Reports: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      {/* Retake Management Modal */}
       {editingRetakeStudent && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-indigo-950/60 backdrop-blur-md animate-in fade-in duration-300">
               <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full border border-indigo-100 dark:border-slate-800">
@@ -204,7 +201,6 @@ export const Reports: React.FC = () => {
                               const isSelected = (retakeOverrides[editingRetakeStudent.student.id] || []).length > 0 
                                 ? retakeOverrides[editingRetakeStudent.student.id].includes(subj.subject.id)
                                 : true;
-                                
                               return (
                                   <button 
                                       key={subj.subject.id}
@@ -228,7 +224,6 @@ export const Reports: React.FC = () => {
           </div>
       )}
 
-      {/* UI Controls */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xl no-print space-y-6">
         <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-center">
             <div className="flex flex-wrap items-center gap-4">
@@ -274,95 +269,42 @@ export const Reports: React.FC = () => {
       </div>
 
       <div className="print-container" ref={reportContentRef}>
-        {/* Honor Roll View */}
         {reportType === 'honor_roll' && (
           <div className="space-y-12">
             {honorRollData.map(({ grade, topStudents }) => (
               <div key={grade} className="bg-white p-8 rounded-[2.5rem] border-2 border-indigo-950 shadow-sm page-break relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 opacity-50 z-0"></div>
-                
                 <div className="relative z-10">
                   <ReportHeader settings={settings} title="لوحة شرف المتفوقين" grade={grade} term={selectedTerm} hideExtra={true} />
-                  
                   <div className="flex justify-center mb-8">
                      <div className="flex items-center gap-3 bg-indigo-900 text-white px-8 py-3 rounded-2xl shadow-xl">
                         <Trophy className="w-6 h-6 text-amber-400" />
                         <span className="text-lg font-black tracking-widest uppercase">أوائل الطلبة</span>
                      </div>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {topStudents.map((res, idx) => (
-                      <div key={res.student.id} className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center transition-all ${
-                        idx === 0 ? 'bg-amber-50 border-amber-200 shadow-lg scale-110 md:z-20' : 
-                        idx === 1 ? 'bg-slate-50 border-slate-200' :
-                        idx === 2 ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-100'
-                      }`}>
+                      <div key={res.student.id} className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center transition-all ${idx === 0 ? 'bg-amber-50 border-amber-200 shadow-lg scale-110 md:z-20' : idx === 1 ? 'bg-slate-50 border-slate-200' : idx === 2 ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-100'}`}>
                         <div className="mb-4 relative">
-                          <div className={`w-16 h-16 rounded-2xl border-2 flex items-center justify-center overflow-hidden bg-white ${
-                            idx === 0 ? 'border-amber-400' : idx === 1 ? 'border-slate-300' : 'border-orange-300'
-                          }`}>
-                            {res.student.photoUrl ? (
-                              <img src={res.student.photoUrl} className="w-full h-full object-cover" />
-                            ) : (
-                              <Users className="w-8 h-8 text-gray-200" />
-                            )}
+                          <div className={`w-16 h-16 rounded-2xl border-2 flex items-center justify-center overflow-hidden bg-white ${idx === 0 ? 'border-amber-400' : idx === 1 ? 'border-slate-300' : 'border-orange-300'}`}>
+                            {res.student.photoUrl ? <img src={res.student.photoUrl} className="w-full h-full object-cover" /> : <Users className="w-8 h-8 text-gray-200" />}
                           </div>
-                          <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-black text-white ${
-                            idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-orange-500' : 'bg-indigo-600'
-                          }`}>
-                            {idx + 1}
-                          </div>
+                          <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-black text-white ${idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-orange-500' : 'bg-indigo-600'}`}>{idx + 1}</div>
                         </div>
-                        
                         <h4 className="text-sm font-black text-gray-800 h-10 flex items-center mb-2">{res.student.name}</h4>
-                        
                         <div className="w-full h-px bg-gray-200 mb-3"></div>
-                        
                         <div className="space-y-1">
                           <p className="text-[10pt] font-black text-indigo-700">{(selectedTerm === 1 ? res.term1Percentage : selectedTerm === 2 ? res.term2Percentage : res.finalPercentage).toFixed(1)}%</p>
                           <p className={`text-[8pt] font-bold ${idx === 0 ? 'text-amber-600' : 'text-gray-400'}`}>{getRankArabic(idx + 1)}</p>
                         </div>
-                        
                         {idx === 0 && <Medal className="w-6 h-6 text-amber-500 mt-4 animate-bounce" />}
                       </div>
                     ))}
                   </div>
-
-                  {/* Summary Table for Top Students */}
-                  <div className="mt-12 overflow-hidden rounded-3xl border-2 border-black">
-                     <table className="w-full text-right">
-                        <thead>
-                          <tr className="bg-indigo-950 text-white text-[10pt]">
-                            <th className="p-3 border-l border-white/20">المركز</th>
-                            <th className="p-3 border-l border-white/20">اسم الطالب</th>
-                            <th className="p-3 border-l border-white/20 text-center">المعدل العام</th>
-                            <th className="p-3 text-center">النتيجة</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y-2 divide-black">
-                          {topStudents.map((res, idx) => (
-                            <tr key={res.student.id} className={idx === 0 ? 'bg-amber-50/50' : ''}>
-                              <td className="p-3 font-black text-indigo-900">{getRankArabic(idx + 1)}</td>
-                              <td className="p-3 font-black">{res.student.name}</td>
-                              <td className="p-3 text-center font-black">{(selectedTerm === 1 ? res.term1Percentage : selectedTerm === 2 ? res.term2Percentage : res.finalPercentage).toFixed(1)}%</td>
-                              <td className="p-3 text-center font-bold text-emerald-600">متفوق</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                     </table>
-                  </div>
-
                   <ReportFooter settings={settings} />
                 </div>
               </div>
             ))}
-            {honorRollData.length === 0 && (
-              <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
-                  <Star className="w-16 h-16 text-amber-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-bold">لم يتم العثور على طلاب متفوقين لإدراجهم في لوحة الشرف لهذه الفترة.</p>
-              </div>
-            )}
           </div>
         )}
 
@@ -371,7 +313,6 @@ export const Reports: React.FC = () => {
                 {filteredResults.map((res: ExtendedResult) => (
                 <div key={res.student.id} className="grade-card bg-white p-8 mb-4 rounded-3xl border-2 border-black shadow-sm print:shadow-none print:m-0 print:mb-8 relative overflow-hidden page-break transition-all">
                     <ReportHeader settings={settings} title="شهادة تقييم مستوى طالب" grade={selectedGrade} term={selectedTerm} />
-                    
                     <div className="flex gap-6 mb-6">
                         <div className="w-24 h-24 rounded-2xl bg-gray-100 border border-black overflow-hidden flex-shrink-0">
                             {res.student.photoUrl ? <img src={res.student.photoUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-gray-300">صورة الطالب</div>}
@@ -387,79 +328,10 @@ export const Reports: React.FC = () => {
                              <span className="text-[6px] font-bold mt-1">رمز التحقق</span>
                         </div>
                     </div>
-
-                    <div className="no-print flex gap-2 mb-6">
-                        {res.termSpecificStatus === 'دور ثاني' && (
-                            <button onClick={() => setEditingRetakeStudent(res)} className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white py-2 rounded-xl text-xs font-black hover:bg-amber-600 shadow-md shadow-amber-100 transition-all active:scale-95">
-                                <Edit3 className="w-4 h-4" /> تخصيص مواد الملحق
-                            </button>
-                        )}
-                        <button onClick={() => shareOnWhatsApp(res)} className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 text-white py-2 rounded-xl text-xs font-black hover:bg-emerald-600 shadow-md shadow-emerald-100 transition-all active:scale-95">
-                            <MessageCircle className="w-4 h-4" /> إرسال عبر واتساب
-                        </button>
-                    </div>
-
-                    {res.failureDetails.length > 0 && res.termSpecificStatus === 'دور ثاني' && (
-                        <div className="mb-6 p-4 bg-red-50 border-2 border-black rounded-2xl">
-                            <h5 className="text-[10pt] font-black text-red-900 mb-2 flex items-center gap-2"><ShieldAlert className="w-4 h-4" /> مطلوب إعادة التقييم في المواد التالية:</h5>
-                            <div className="flex flex-wrap gap-2">
-                                {res.failureDetails.map((fd, i) => (
-                                    <span key={i} className="px-3 py-1 bg-white border border-black font-black text-[9pt]">{fd.subject.name} ({fd.reason})</span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <CertificateTable res={res} subjects={gradeSubjects} term={selectedTerm} />
                     <ReportFooter settings={settings} />
                 </div>
                 ))}
-            </div>
-        )}
-        
-        {reportType === 'table' && (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-8 print:p-0 print:border-none">
-                <ReportHeader settings={settings} title="كشف النتائج الإجمالي" grade={selectedGrade} term={selectedTerm} hideExtra={true} />
-                <div className="overflow-x-auto">
-                    <table className="w-full text-right border-collapse text-[9pt]">
-                        <thead className="bg-gray-100 font-black">
-                            <tr>
-                                <th className="p-3 border border-black">م</th>
-                                <th className="p-3 border border-black">رقم الجلوس</th>
-                                <th className="p-3 border border-black">الاسم</th>
-                                {gradeSubjects.map(s => <th key={s.id} className="p-3 border border-black text-center">{s.name}</th>)}
-                                <th className="p-3 border border-black text-center">المعدل</th>
-                                <th className="p-3 border border-black text-center">الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredResults.map((res, i) => (
-                                <tr key={res.student.id} className="hover:bg-gray-50">
-                                    <td className="p-2 border border-black text-center">{i + 1}</td>
-                                    <td className="p-2 border border-black text-center font-black">{res.student.seatingNumber || '---'}</td>
-                                    <td className="p-2 border border-black font-black">{res.student.name}</td>
-                                    {gradeSubjects.map(gs => {
-                                        const subjRes = selectedTerm === 1 ? res.term1Results.find(t => t.subject.id === gs.id) :
-                                                       selectedTerm === 2 ? res.term2Results.find(t => t.subject.id === gs.id) :
-                                                       res.subjects.find(s => s.subject.id === gs.id);
-                                        const score = selectedTerm === 'final' ? subjRes?.total : (subjRes as any)?.score;
-                                        const isFailed = (res.failureDetails || []).some(fd => fd.subject.id === gs.id);
-                                        return (
-                                            <td key={gs.id} className={`p-2 border border-black text-center font-bold ${isFailed ? 'text-red-600 bg-red-50' : ''}`}>
-                                                {subjRes?.status === 'absent' ? 'غ' : score ?? '---'}
-                                            </td>
-                                        );
-                                    })}
-                                    <td className="p-2 border border-black text-center font-black">{(selectedTerm === 1 ? res.term1Percentage : selectedTerm === 2 ? res.term2Percentage : res.finalPercentage).toFixed(1)}%</td>
-                                    <td className={`p-2 border border-black text-center font-black ${res.termSpecificStatus === 'ناجح' ? 'text-emerald-700' : 'text-red-600'}`}>
-                                        {res.termSpecificStatus}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <ReportFooter settings={settings} />
             </div>
         )}
       </div>
@@ -467,7 +339,6 @@ export const Reports: React.FC = () => {
   );
 };
 
-// Sub-components
 const CertificateTable = ({ res, subjects, term }: any) => (
     <table className="w-full text-right mb-6 border border-black text-[9pt]">
         <thead className="bg-gray-100 font-black">
@@ -516,11 +387,7 @@ const ReportHeader = ({ settings, title, grade, term, hideExtra }: any) => (
           <h1 className="text-[10pt] font-black text-black leading-tight">{settings.schoolName}</h1>
         </div>
         <div className="flex-shrink-0 mx-2">
-          {settings.logoUrl ? (
-            <img src={settings.logoUrl} alt="Logo" className="h-12 w-12 object-contain print:h-10 print:w-10" />
-          ) : (
-            <div className="h-10 w-10 border border-black rounded-full flex items-center justify-center font-black text-[7pt]">شعار</div>
-          )}
+          {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="h-12 w-12 object-contain print:h-10 print:w-10" /> : <div className="h-10 w-10 border border-black rounded-full flex items-center justify-center font-black text-[7pt]">شعار</div>}
         </div>
         <div className="text-left flex flex-col gap-0.5">
           <p className="text-[7pt] font-black text-gray-600">العام الدراسي: {DB.getActiveYear()?.name || '---'}</p>
@@ -538,17 +405,8 @@ const ReportHeader = ({ settings, title, grade, term, hideExtra }: any) => (
 
 const ReportFooter = ({ settings }: { settings: SchoolSettings }) => (
   <div className="mt-8 grid grid-cols-3 gap-4 text-center font-black text-[8pt] px-4 pb-2 print:mt-4 print:pb-1">
-    <div className="flex flex-col gap-8 print:gap-4">
-      <p className="border-b border-black pb-1">معد الكشف</p>
-      <p className="text-[7pt]">{settings.collectorName || '........................'}</p>
-    </div>
-    <div className="flex flex-col gap-8 print:gap-4">
-      <p className="border-b border-black pb-1">رئيس الكنترول</p>
-      <p className="text-[7pt]">{settings.controlHeadName || '........................'}</p>
-    </div>
-    <div className="flex flex-col gap-8 print:gap-4">
-      <p className="border-b border-black pb-1">مدير المدرسة</p>
-      <p className="text-[8pt]">{settings.principal || '........................'}</p>
-    </div>
+    <div className="flex flex-col gap-8 print:gap-4"><p className="border-b border-black pb-1">معد الكشف</p><p className="text-[7pt]">{settings.collectorName || '........................'}</p></div>
+    <div className="flex flex-col gap-8 print:gap-4"><p className="border-b border-black pb-1">رئيس الكنترول</p><p className="text-[7pt]">{settings.controlHeadName || '........................'}</p></div>
+    <div className="flex flex-col gap-8 print:gap-4"><p className="border-b border-black pb-1">مدير المدرسة</p><p className="text-[8pt]">{settings.principal || '........................'}</p></div>
   </div>
 );
