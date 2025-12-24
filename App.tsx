@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
-import { Layout } from './components/Layout';
-import { Dashboard } from './pages/Dashboard';
-import { Students } from './pages/Students';
-import { Grades } from './pages/Grades';
-import { Control } from './pages/Control';
-import { Reports } from './pages/Reports';
-import { Settings } from './pages/Settings';
-import { Subjects } from './pages/Subjects';
-import { About } from './pages/About';
+import { Layout } from './components/Layout.tsx';
+import { Dashboard } from './pages/Dashboard.tsx';
+import { Students } from './pages/Students.tsx';
+import { Grades } from './pages/Grades.tsx';
+import { Control } from './pages/Control.tsx';
+import { Reports } from './pages/Reports.tsx';
+import { Settings } from './pages/Settings.tsx';
+import { Subjects } from './pages/Subjects.tsx';
+import { About } from './pages/About.tsx';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');

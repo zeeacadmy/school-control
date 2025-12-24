@@ -27,11 +27,15 @@
     </style>
 
     <script>
-      // Shim for process.env to prevent ReferenceError
+      // Crucial Fix: Define global environment variables for the browser
+      window.global = window;
       window.process = {
         env: {
-          API_KEY: "" 
-        }
+          NODE_ENV: 'production',
+          API_KEY: '' // Will be injected by the environment
+        },
+        version: 'v18.0.0',
+        nextTick: function(fn) { setTimeout(fn, 0); }
       };
     </script>
 
@@ -44,15 +48,15 @@
     "lucide-react": "https://esm.sh/lucide-react@0.460.0",
     "recharts": "https://esm.sh/recharts@2.13.3",
     "@google/genai": "https://esm.sh/@google/genai@0.21.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
   </head>
-  <body class="bg-gray-50 text-gray-900">
+  <body class="bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
     <div id="root"></div>
-    <!-- Use Babel to transpile index.tsx -->
+    <!-- Babel will fetch the TSX file as text and transpile it -->
     <script type="text/babel" data-type="module" src="./index.tsx"></script>
   </body>
 </html>

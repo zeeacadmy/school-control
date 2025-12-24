@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DB } from '../db';
 import { SchoolSettings, AcademicYear } from '../types';
-// Add Settings as SettingsIcon to the imports
 import { Save, School, Info, Database, Calendar, Plus, Trash2, CheckCircle, Clock, Download, Upload, ShieldAlert, Image as ImageIcon, X, Lock, ShieldCheck, KeyRound, UserCog, Sun, Moon, Settings as SettingsIcon } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -57,6 +56,13 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const removeLogo = () => {
+    setSettings({ ...settings, logoUrl: '' });
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center animate-in fade-in duration-500">
@@ -95,33 +101,139 @@ export const Settings: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-                <label className="text-sm font-black text-gray-500 flex items-center gap-2">اختيار السمة (Theme)</label>
-                <div className="flex gap-4">
-                    <button 
-                        onClick={() => setSettings({...settings, theme: 'light'})}
-                        className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${settings.theme === 'light' ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-gray-50 border-transparent text-gray-400 dark:bg-slate-800'}`}
-                    >
-                        <Sun className="w-5 h-5" /> نهاراً
-                    </button>
-                    <button 
-                        onClick={() => setSettings({...settings, theme: 'dark'})}
-                        className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${settings.theme === 'dark' ? 'bg-slate-800 border-indigo-600 text-indigo-400' : 'bg-gray-50 border-transparent text-gray-400 dark:bg-slate-800'}`}
-                    >
-                        <Moon className="w-5 h-5" /> ليلأ
-                    </button>
+            <div className="space-y-6">
+                <div className="space-y-4">
+                    <label className="text-sm font-black text-gray-500 flex items-center gap-2">اختيار السمة (Theme)</label>
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={() => setSettings({...settings, theme: 'light'})}
+                            className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${settings.theme === 'light' ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-gray-50 border-transparent text-gray-400 dark:bg-slate-800'}`}
+                        >
+                            <Sun className="w-5 h-5" /> نهاراً
+                        </button>
+                        <button 
+                            onClick={() => setSettings({...settings, theme: 'dark'})}
+                            className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${settings.theme === 'dark' ? 'bg-slate-800 border-indigo-600 text-indigo-400' : 'bg-gray-50 border-transparent text-gray-400 dark:bg-slate-800'}`}
+                        >
+                            <Moon className="w-5 h-5" /> ليلاً
+                        </button>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-sm font-black text-gray-500 flex items-center gap-2">شعار المدرسة</label>
+                    <div className="flex flex-col gap-4 p-6 bg-gray-50 dark:bg-slate-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-slate-700">
+                        <div className="flex items-center justify-center">
+                            {settings.logoUrl ? (
+                                <div className="relative group">
+                                    <img 
+                                        src={settings.logoUrl} 
+                                        alt="School Logo Preview" 
+                                        className="w-32 h-32 object-contain rounded-2xl bg-white shadow-sm p-2" 
+                                    />
+                                    <button 
+                                        onClick={removeLogo}
+                                        className="absolute -top-2 -right-2 p-1.5 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-colors"
+                                        title="حذف الشعار"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="w-32 h-32 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-300 dark:text-slate-600">
+                                    <ImageIcon className="w-12 h-12" />
+                                </div>
+                            )}
+                        </div>
+                        <input 
+                            type="file" 
+                            ref={logoInputRef}
+                            onChange={handleLogoUpload}
+                            accept="image/*"
+                            className="hidden"
+                        />
+                        <button 
+                            onClick={() => logoInputRef.current?.click()}
+                            className="w-full py-3 px-4 bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 rounded-xl text-xs font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Upload className="w-4 h-4" />
+                            {settings.logoUrl ? 'تغيير الشعار' : 'رفع شعار جديد'}
+                        </button>
+                        {settings.logoUrl && (
+                            <button 
+                                onClick={removeLogo}
+                                className="w-full py-2 text-[10px] font-black text-red-500 hover:text-red-600 transition-colors flex items-center justify-center gap-1"
+                            >
+                                <Trash2 className="w-3 h-3" />
+                                إزالة الشعار الحالي
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <label className="text-sm font-black text-gray-500">بيانات المدرسة</label>
-                <input 
-                    type="text" 
-                    placeholder="اسم المدرسة" 
-                    className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
-                    value={settings.schoolName}
-                    onChange={(e) => setSettings({...settings, schoolName: e.target.value})}
-                />
+            <div className="space-y-6">
+                <div className="space-y-4">
+                    <label className="text-sm font-black text-gray-500">بيانات المدرسة</label>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">اسم المدرسة</span>
+                            <input 
+                                type="text" 
+                                placeholder="اسم المدرسة" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                value={settings.schoolName}
+                                onChange={(e) => setSettings({...settings, schoolName: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">المديرية / الإدارة</span>
+                            <input 
+                                type="text" 
+                                placeholder="مديرية التربية والتعليم" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                value={settings.directorate}
+                                onChange={(e) => setSettings({...settings, directorate: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">مدير المدرسة</span>
+                            <input 
+                                type="text" 
+                                placeholder="أ/ ...." 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                value={settings.principal}
+                                onChange={(e) => setSettings({...settings, principal: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-sm font-black text-gray-500">المسؤولين (للمستندات)</label>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">معد الكشف</span>
+                            <input 
+                                type="text" 
+                                placeholder="الاسم الرباعي" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                value={settings.collectorName}
+                                onChange={(e) => setSettings({...settings, collectorName: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">رئيس الكنترول</span>
+                            <input 
+                                type="text" 
+                                placeholder="الاسم الرباعي" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                value={settings.controlHeadName}
+                                onChange={(e) => setSettings({...settings, controlHeadName: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

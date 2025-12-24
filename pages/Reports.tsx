@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DB } from '../db';
-import { Grade, Student, Subject, GradeRecord, SchoolSettings } from '../types';
-import { calculateStudentStatus, DetailedReportData } from '../logic/grading';
+import { DB } from '../db.ts';
+import { Grade, Student, Subject, GradeRecord, SchoolSettings } from '../types.ts';
+import { calculateStudentStatus, DetailedReportData } from '../logic/grading.ts';
 import { Printer, FileText, Award, LayoutGrid, Users, Trophy, Medal, CheckSquare, Square, X, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -37,10 +37,14 @@ export const Reports: React.FC = () => {
   const [settings, setSettings] = useState(DB.getSettings());
 
   useEffect(() => {
-    setStudents(DB.getStudents());
-    setAllSubjects(DB.getSubjects());
-    setGrades(DB.getGrades());
-    setSettings(DB.getSettings());
+    try {
+      setStudents(DB.getStudents() || []);
+      setAllSubjects(DB.getSubjects() || []);
+      setGrades(DB.getGrades() || []);
+      setSettings(DB.getSettings() || {});
+    } catch (e) {
+      console.error("Error loading DB in Reports:", e);
+    }
   }, []);
 
   const gradeSubjects = useMemo(() => 
@@ -121,12 +125,12 @@ export const Reports: React.FC = () => {
   const handleAIAnalysis = async (studentResult: ExtendedResult) => {
     setAiAnalyzing(studentResult.student.id);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `حلل مستوى الطالب: ${studentResult.student.name}، معدل: ${studentResult.finalPercentage.toFixed(1)}%، صف: ${studentResult.student.grade}.`;
       const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
       setAiResult({ studentId: studentResult.student.id, text: response.text || "" });
     } catch (err) {
-      console.error(err);
+      console.error("AI Analysis failed:", err);
     } finally {
       setAiAnalyzing(null);
     }
@@ -140,14 +144,14 @@ export const Reports: React.FC = () => {
                 {reportType !== 'honor_roll' ? (
                   <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-black text-gray-400">الصف الدراسي</span>
-                      <select className="bg-gray-50 border p-3 rounded-2xl min-w-[200px] font-bold" value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value as Grade)}>
+                      <select className="bg-gray-50 dark:bg-slate-800 dark:text-white border p-3 rounded-2xl min-w-[200px] font-bold outline-none" value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value as Grade)}>
                           {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
                       </select>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black text-gray-400">عدد الأوائل</span>
-                    <div className="flex bg-gray-50 p-1.5 rounded-2xl border">
+                    <div className="flex bg-gray-50 dark:bg-slate-800 p-1.5 rounded-2xl border">
                         {[3, 4, 5].map(n => (
                           <button key={n} onClick={() => setTopCount(n)} className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${topCount === n ? 'bg-amber-500 text-white shadow-md' : 'text-gray-400'}`}>{n}</button>
                         ))}
@@ -156,7 +160,7 @@ export const Reports: React.FC = () => {
                 )}
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black text-gray-400">الفصل</span>
-                    <div className="flex bg-gray-50 p-1.5 rounded-2xl border">
+                    <div className="flex bg-gray-50 dark:bg-slate-800 p-1.5 rounded-2xl border">
                         <ReportTermButton active={selectedTerm === 1} onClick={() => setSelectedTerm(1)} label="فصل 1" />
                         <ReportTermButton active={selectedTerm === 2} onClick={() => setSelectedTerm(2)} label="فصل 2" />
                         <ReportTermButton active={selectedTerm === 'final'} onClick={() => setSelectedTerm('final')} label="نهائي" />
@@ -165,10 +169,10 @@ export const Reports: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-                <div className="flex bg-gray-100 p-1.5 rounded-2xl border">
-                    <button onClick={() => setReportType('table')} className={`p-2.5 rounded-xl ${reportType === 'table' ? 'bg-white text-indigo-600' : 'text-gray-400'}`}><LayoutGrid className="w-5 h-5" /></button>
-                    <button onClick={() => setReportType('cards')} className={`p-2.5 rounded-xl ${reportType === 'cards' ? 'bg-white text-indigo-600' : 'text-gray-400'}`}><FileText className="w-5 h-5" /></button>
-                    <button onClick={() => setReportType('honor_roll')} className={`p-2.5 rounded-xl ${reportType === 'honor_roll' ? 'bg-white text-amber-500' : 'text-gray-400'}`}><Award className="w-5 h-5" /></button>
+                <div className="flex bg-gray-100 dark:bg-slate-800 p-1.5 rounded-2xl border">
+                    <button onClick={() => setReportType('table')} className={`p-2.5 rounded-xl ${reportType === 'table' ? 'bg-white dark:bg-slate-700 text-indigo-600' : 'text-gray-400'}`}><LayoutGrid className="w-5 h-5" /></button>
+                    <button onClick={() => setReportType('cards')} className={`p-2.5 rounded-xl ${reportType === 'cards' ? 'bg-white dark:bg-slate-700 text-indigo-600' : 'text-gray-400'}`}><FileText className="w-5 h-5" /></button>
+                    <button onClick={() => setReportType('honor_roll')} className={`p-2.5 rounded-xl ${reportType === 'honor_roll' ? 'bg-white dark:bg-slate-700 text-amber-500' : 'text-gray-400'}`}><Award className="w-5 h-5" /></button>
                 </div>
                 <button onClick={() => window.print()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black shadow-lg">
                     <Printer className="w-5 h-5" /> طباعة
@@ -181,7 +185,7 @@ export const Reports: React.FC = () => {
         {reportType === 'honor_roll' && (
           <div className="space-y-12">
             {honorRollData.map(({ grade, topStudents }) => (
-              <div key={grade} className="bg-white p-8 rounded-[2.5rem] border-2 border-indigo-950 shadow-sm page-break relative overflow-hidden">
+              <div key={grade} className="bg-white p-8 rounded-[2.5rem] border-2 border-indigo-950 shadow-sm page-break relative overflow-hidden mb-8">
                 <ReportHeader settings={settings} title="لوحة شرف المتفوقين" grade={grade} term={selectedTerm} hideExtra={true} />
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
                     {topStudents.map((res, idx) => (
@@ -195,6 +199,7 @@ export const Reports: React.FC = () => {
                       </div>
                     ))}
                 </div>
+                <ReportFooter settings={settings} />
               </div>
             ))}
           </div>
@@ -220,6 +225,35 @@ export const Reports: React.FC = () => {
                 ))}
             </div>
         )}
+
+        {reportType === 'table' && (
+           <div className="bg-white p-6 rounded-3xl border-2 border-black">
+              <ReportHeader settings={settings} title="كشف نتائج الطلاب" grade={selectedGrade} term={selectedTerm} />
+              <table className="w-full text-right border-collapse border border-black text-[9pt]">
+                 <thead className="bg-gray-100 font-black">
+                    <tr>
+                       <th className="border border-black p-2 w-10">م</th>
+                       <th className="border border-black p-2">اسم الطالب</th>
+                       <th className="border border-black p-2 text-center">المعدل</th>
+                       <th className="border border-black p-2 text-center">الحالة</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    {filteredResults.map((res, idx) => (
+                       <tr key={res.student.id}>
+                          <td className="border border-black p-2 text-center font-bold">{idx + 1}</td>
+                          <td className="border border-black p-2 font-black">{res.student.name}</td>
+                          <td className="border border-black p-2 text-center font-black">
+                            {(selectedTerm === 1 ? res.term1Percentage : selectedTerm === 2 ? res.term2Percentage : res.finalPercentage).toFixed(1)}%
+                          </td>
+                          <td className="border border-black p-2 text-center font-bold">{res.termSpecificStatus}</td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+              <ReportFooter settings={settings} />
+           </div>
+        )}
       </div>
     </div>
   );
@@ -235,7 +269,7 @@ const CertificateTable = ({ res, subjects, term }: any) => (
             </tr>
         </thead>
         <tbody>
-            {subjects.map((gs: any) => {
+            {(subjects || []).map((gs: any) => {
                 const subjRes = term === 1 ? res.term1Results.find((t: any) => t.subject.id === gs.id) :
                                 term === 2 ? res.term2Results.find((t: any) => t.subject.id === gs.id) :
                                 res.subjects.find((s: any) => s.subject.id === gs.id);
@@ -269,20 +303,20 @@ const ReportHeader = ({ settings, title, grade, term, hideExtra }: any) => (
     <div className="text-center mb-4 border-b border-black pb-4">
       <div className="flex justify-between items-center mb-2">
         <div className="text-right">
-          <p className="text-[7pt] font-black text-gray-600">{settings.directorate}</p>
-          <h1 className="text-[10pt] font-black leading-tight">{settings.schoolName}</h1>
+          <p className="text-[7pt] font-black text-gray-600">{settings?.directorate || 'مديرية التعليم'}</p>
+          <h1 className="text-[10pt] font-black leading-tight text-black">{settings?.schoolName || 'اسم المدرسة'}</h1>
         </div>
         <div className="flex-shrink-0 mx-2">
-          {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="h-12 w-12 object-contain" /> : <div className="h-10 w-10 border border-black rounded-full flex items-center justify-center font-black text-[7pt]">شعار</div>}
+          {settings?.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="h-12 w-12 object-contain" /> : <div className="h-10 w-10 border border-black rounded-full flex items-center justify-center font-black text-[7pt]">شعار</div>}
         </div>
         <div className="text-left">
           <p className="text-[7pt] font-black text-gray-600">العام: {DB.getActiveYear()?.name || '---'}</p>
-          <p className="text-[8pt] font-black">{grade}</p>
+          <p className="text-[8pt] font-black text-black">{grade}</p>
         </div>
       </div>
-      <div className="inline-block border border-black px-4 py-1 font-black text-[11pt] bg-gray-50">
+      <div className="inline-block border border-black px-4 py-1 font-black text-[11pt] bg-gray-50 uppercase tracking-widest text-black">
         {title}
-        {!hideExtra && <span className="block text-[7pt] font-bold mt-0.5 text-gray-500 uppercase">
+        {!hideExtra && <span className="block text-[7pt] font-bold mt-0.5 text-gray-500">
           {term === 'final' ? 'النتيجة النهائية' : `نتائج الفصل الدراسي ${term === 1 ? 'الأول' : 'الثاني'}`}
         </span>}
       </div>
@@ -291,8 +325,8 @@ const ReportHeader = ({ settings, title, grade, term, hideExtra }: any) => (
 
 const ReportFooter = ({ settings }: { settings: SchoolSettings }) => (
   <div className="mt-8 grid grid-cols-3 gap-4 text-center font-black text-[8pt]">
-    <div><p className="border-b border-black pb-1 mb-6">معد الكشف</p><p className="text-[7pt]">{settings.collectorName || '..................'}</p></div>
-    <div><p className="border-b border-black pb-1 mb-6">رئيس الكنترول</p><p className="text-[7pt]">{settings.controlHeadName || '..................'}</p></div>
-    <div><p className="border-b border-black pb-1 mb-6">مدير المدرسة</p><p className="text-[8pt]">{settings.principal || '..................'}</p></div>
+    <div><p className="border-b border-black pb-1 mb-6">معد الكشف</p><p className="text-[7pt]">{settings?.collectorName || '..................'}</p></div>
+    <div><p className="border-b border-black pb-1 mb-6">رئيس الكنترول</p><p className="text-[7pt]">{settings?.controlHeadName || '..................'}</p></div>
+    <div><p className="border-b border-black pb-1 mb-6">مدير المدرسة</p><p className="text-[8pt]">{settings?.principal || '..................'}</p></div>
   </div>
 );
