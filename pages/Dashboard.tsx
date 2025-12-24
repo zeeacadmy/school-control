@@ -1,10 +1,10 @@
 
 import React, { useMemo } from 'react';
-import { DB } from '../db';
+import { DB } from '../db.ts';
 import { Users, GraduationCap, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Grade } from '../types';
-import { calculateStudentStatus } from '../logic/grading';
+import { Grade } from '../types.ts';
+import { calculateStudentStatus } from '../logic/grading.ts';
 
 export const Dashboard: React.FC<{ setPage: (page: string) => void }> = ({ setPage }) => {
   const students = DB.getStudents();
@@ -57,8 +57,8 @@ export const Dashboard: React.FC<{ setPage: (page: string) => void }> = ({ setPa
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold mb-6 text-gray-700">توزيع الطلاب حسب الصف</h3>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold mb-6 text-gray-700 dark:text-slate-300">توزيع الطلاب حسب الصف</h3>
           <div className="h-80">
             {stats.gradeCounts.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -82,50 +82,50 @@ export const Dashboard: React.FC<{ setPage: (page: string) => void }> = ({ setPa
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold mb-6 text-gray-700">إجراءات سريعة</h3>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+          <h3 className="text-lg font-bold mb-6 text-gray-700 dark:text-slate-300">إجراءات سريعة</h3>
           <div className="grid grid-cols-1 gap-3">
             <QuickActionButton 
               onClick={() => setPage('students')}
               label="إضافة طالب جديد" 
-              color="bg-indigo-50 text-indigo-700 hover:bg-indigo-100" 
+              color="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100" 
             />
             <QuickActionButton 
               onClick={() => setPage('grades')}
               label="رصد درجات مادة" 
-              color="bg-emerald-50 text-emerald-700 hover:bg-emerald-100" 
+              color="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100" 
             />
             <QuickActionButton 
               onClick={() => setPage('control')}
               label="أرقام الجلوس" 
-              color="bg-amber-50 text-amber-700 hover:bg-amber-100" 
+              color="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100" 
             />
             <QuickActionButton 
               onClick={() => setPage('reports')}
               label="عرض النتائج" 
-              color="bg-rose-50 text-rose-700 hover:bg-rose-100" 
+              color="bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 hover:bg-rose-100" 
             />
           </div>
           
-          <div className="mt-8 pt-6 border-t border-gray-50">
-            <h4 className="font-bold text-gray-700 mb-4">أداء النظام</h4>
+          <div className="mt-8 pt-6 border-t border-gray-50 dark:border-slate-800">
+            <h4 className="font-bold text-gray-700 dark:text-slate-300 mb-4">أداء النظام</h4>
             <div className="space-y-4">
                <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-gray-500">اكتمال رصد الدرجات</span>
                     <span className="font-bold">75%</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                     <div className="bg-indigo-500 h-full w-[75%]"></div>
                   </div>
                </div>
-               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+               <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl">
                  <div className="p-2 bg-blue-500 text-white rounded-lg">
                    <AlertCircle className="w-4 h-4" />
                  </div>
                  <div className="text-xs">
-                   <p className="font-bold text-blue-900">ملاحظة</p>
-                   <p className="text-blue-700">تأكد من حفظ التغييرات قبل الطباعة</p>
+                   <p className="font-bold text-blue-900 dark:text-blue-400">ملاحظة</p>
+                   <p className="text-blue-700 dark:text-blue-500">تأكد من حفظ التغييرات قبل الطباعة</p>
                  </div>
                </div>
             </div>
@@ -137,13 +137,13 @@ export const Dashboard: React.FC<{ setPage: (page: string) => void }> = ({ setPa
 };
 
 const StatCard = ({ icon, label, value, color }: any) => (
-  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:scale-[1.02]">
-    <div className={`${color} p-4 rounded-2xl text-white shadow-lg shadow-gray-200`}>
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex items-center gap-4 transition-transform hover:scale-[1.02]">
+    <div className={`${color} p-4 rounded-2xl text-white shadow-lg shadow-gray-200 dark:shadow-none`}>
       {icon}
     </div>
     <div>
       <p className="text-sm text-gray-400 font-bold">{label}</p>
-      <p className="text-3xl font-black text-gray-800">{value}</p>
+      <p className="text-3xl font-black text-gray-800 dark:text-slate-100">{value}</p>
     </div>
   </div>
 );

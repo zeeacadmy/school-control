@@ -33,6 +33,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, setPage })
     const currentSettings = DB.getSettings();
     setSettings(currentSettings);
     setIsDark(currentSettings.theme === 'dark');
+    
+    if (currentSettings.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [activePage]);
 
   const toggleTheme = () => {
@@ -40,6 +46,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, setPage })
     setIsDark(!isDark);
     const updatedSettings = { ...settings, theme: newTheme as 'light' | 'dark' };
     DB.saveSettings(updatedSettings);
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const menuItems = [

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DB } from '../db';
 import { SchoolSettings, AcademicYear } from '../types';
-import { Save, School, Info, Database, Calendar, Plus, Trash2, CheckCircle, Clock, Download, Upload, ShieldAlert, Image as ImageIcon, X, Lock, ShieldCheck, KeyRound, UserCog, Sun, Moon, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Upload, Image as ImageIcon, X, Lock, ShieldCheck, Sun, Moon, Settings as SettingsIcon, Trash2 } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,13 +19,11 @@ export const Settings: React.FC = () => {
     theme: 'light'
   });
 
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
       setSettings(DB.getSettings());
-      setAcademicYears(DB.getAcademicYears());
     }
   }, [isAuthenticated]);
 
@@ -42,7 +40,13 @@ export const Settings: React.FC = () => {
 
   const handleSaveSettings = () => {
     DB.saveSettings(settings);
-    window.alert('تم حفظ الإعدادات بنجاح. سيتم تطبيق السمة عند إعادة التحميل أو الانتقال لصفحة أخرى.');
+    window.alert('تم حفظ الإعدادات بنجاح. سيتم تطبيق السمة والمظهر الجديد فوراً.');
+    // Force immediate theme application
+    if (settings.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +133,7 @@ export const Settings: React.FC = () => {
                                     <img 
                                         src={settings.logoUrl} 
                                         alt="School Logo Preview" 
-                                        className="w-32 h-32 object-contain rounded-2xl bg-white shadow-sm p-2" 
+                                        className="w-32 h-32 object-contain rounded-2xl bg-white shadow-sm p-2 border-2 border-indigo-50" 
                                     />
                                     <button 
                                         onClick={removeLogo}
@@ -174,14 +178,14 @@ export const Settings: React.FC = () => {
 
             <div className="space-y-6">
                 <div className="space-y-4">
-                    <label className="text-sm font-black text-gray-500">بيانات المدرسة</label>
+                    <label className="text-sm font-black text-gray-500">بيانات المدرسة الأساسية</label>
                     <div className="space-y-4">
                         <div className="space-y-1.5">
                             <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">اسم المدرسة</span>
                             <input 
                                 type="text" 
                                 placeholder="اسم المدرسة" 
-                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white outline-none focus:border-indigo-500"
                                 value={settings.schoolName}
                                 onChange={(e) => setSettings({...settings, schoolName: e.target.value})}
                             />
@@ -191,7 +195,7 @@ export const Settings: React.FC = () => {
                             <input 
                                 type="text" 
                                 placeholder="مديرية التربية والتعليم" 
-                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white outline-none focus:border-indigo-500"
                                 value={settings.directorate}
                                 onChange={(e) => setSettings({...settings, directorate: e.target.value})}
                             />
@@ -201,7 +205,7 @@ export const Settings: React.FC = () => {
                             <input 
                                 type="text" 
                                 placeholder="أ/ ...." 
-                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white outline-none focus:border-indigo-500"
                                 value={settings.principal}
                                 onChange={(e) => setSettings({...settings, principal: e.target.value})}
                             />
@@ -210,14 +214,14 @@ export const Settings: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                    <label className="text-sm font-black text-gray-500">المسؤولين (للمستندات)</label>
+                    <label className="text-sm font-black text-gray-500">التواقيع والاعتمادات</label>
                     <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-1.5">
-                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">معد الكشف</span>
+                            <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">معد الكشوف</span>
                             <input 
                                 type="text" 
-                                placeholder="الاسم الرباعي" 
-                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                placeholder="الاسم الكامل" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white outline-none focus:border-indigo-500"
                                 value={settings.collectorName}
                                 onChange={(e) => setSettings({...settings, collectorName: e.target.value})}
                             />
@@ -226,8 +230,8 @@ export const Settings: React.FC = () => {
                             <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase mr-1">رئيس الكنترول</span>
                             <input 
                                 type="text" 
-                                placeholder="الاسم الرباعي" 
-                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white"
+                                placeholder="الاسم الكامل" 
+                                className="w-full border-2 border-gray-100 dark:border-slate-800 dark:bg-slate-950 p-3 rounded-xl font-bold dark:text-white outline-none focus:border-indigo-500"
                                 value={settings.controlHeadName}
                                 onChange={(e) => setSettings({...settings, controlHeadName: e.target.value})}
                             />
@@ -238,8 +242,8 @@ export const Settings: React.FC = () => {
         </div>
 
         <div className="pt-8 border-t dark:border-slate-800 flex justify-end">
-            <button onClick={handleSaveSettings} className="bg-indigo-600 text-white font-black px-12 py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
-                <Save className="w-6 h-6" /> حفظ جميع الإعدادات
+            <button onClick={handleSaveSettings} className="bg-indigo-600 text-white font-black px-12 py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3 active:scale-95">
+                <Save className="w-6 h-6" /> حفظ التغييرات
             </button>
         </div>
       </div>

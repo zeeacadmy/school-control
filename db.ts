@@ -1,5 +1,5 @@
 
-import { Student, Subject, GradeRecord, SchoolSettings, Grade, AcademicYear } from './types';
+import { Student, Subject, GradeRecord, SchoolSettings, Grade, AcademicYear } from './types.ts';
 
 const STORAGE_KEYS = {
   STUDENTS: 'scs_students',
@@ -23,66 +23,50 @@ const DEFAULT_YEARS: AcademicYear[] = [
 const DEFAULT_SETTINGS: SchoolSettings = {
   schoolName: "مدرسة المستقبل الرسمية",
   directorate: "مديرية التربية والتعليم",
-  principal: "أ/ محمد علي"
+  principal: "أ/ محمد علي",
+  theme: 'light'
 };
 
 export const DB = {
-  getStudents: (): Student[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS) || '[]'),
+  getStudents: (): Student[] => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS) || '[]');
+    } catch(e) { return []; }
+  },
   saveStudents: (students: Student[]) => localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students)),
   
   getSubjects: (): Subject[] => {
     const data = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
-    return data ? JSON.parse(data) : DEFAULT_SUBJECTS;
+    try {
+      return data ? JSON.parse(data) : DEFAULT_SUBJECTS;
+    } catch(e) { return DEFAULT_SUBJECTS; }
   },
   saveSubjects: (subjects: Subject[]) => localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjects)),
   
-  getGrades: (): GradeRecord[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.GRADES) || '[]'),
+  getGrades: (): GradeRecord[] => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.GRADES) || '[]');
+    } catch(e) { return []; }
+  },
   saveGrades: (grades: GradeRecord[]) => localStorage.setItem(STORAGE_KEYS.GRADES, JSON.stringify(grades)),
   
   getSettings: (): SchoolSettings => {
     const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return data ? JSON.parse(data) : DEFAULT_SETTINGS;
+    try {
+      return data ? JSON.parse(data) : DEFAULT_SETTINGS;
+    } catch(e) { return DEFAULT_SETTINGS; }
   },
   saveSettings: (settings: SchoolSettings) => localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)),
 
   getAcademicYears: (): AcademicYear[] => {
     const data = localStorage.getItem(STORAGE_KEYS.ACADEMIC_YEARS);
-    return data ? JSON.parse(data) : DEFAULT_YEARS;
+    try {
+      return data ? JSON.parse(data) : DEFAULT_YEARS;
+    } catch(e) { return DEFAULT_YEARS; }
   },
   saveAcademicYears: (years: AcademicYear[]) => localStorage.setItem(STORAGE_KEYS.ACADEMIC_YEARS, JSON.stringify(years)),
   
   getActiveYear: (): AcademicYear | undefined => {
     return DB.getAcademicYears().find(y => y.isActive);
-  },
-
-  // ميزات النسخ الاحتياطي
-  exportData: () => {
-    const fullBackup: Record<string, string | null> = {};
-    Object.entries(STORAGE_KEYS).forEach(([_, key]) => {
-      fullBackup[key] = localStorage.getItem(key);
-    });
-    return JSON.stringify(fullBackup);
-  },
-
-  importData: (jsonString: string): boolean => {
-    try {
-      const data = JSON.parse(jsonString);
-      // التحقق من صحة الملف (يجب أن يحتوي على مفاتيح النظام)
-      const keys = Object.values(STORAGE_KEYS);
-      const dataKeys = Object.keys(data);
-      
-      const isValid = keys.some(k => dataKeys.includes(k));
-      if (!isValid) return false;
-
-      Object.entries(data).forEach(([key, value]) => {
-        if (value && typeof value === 'string') {
-          localStorage.setItem(key, value);
-        }
-      });
-      return true;
-    } catch (e) {
-      console.error('Backup Import Error:', e);
-      return false;
-    }
   }
 };
